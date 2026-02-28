@@ -7,7 +7,7 @@ services:
     container_name: school-app
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "127.0.0.1:4001:3000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=file:/app/prisma/dev.db
