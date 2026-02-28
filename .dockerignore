@@ -1,0 +1,29 @@
+# Dependencies / build artefacts
+node_modules
+.next
+out
+
+# Dev / OS files
+.env.local
+.env.development
+*.log
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Docs / tests not needed in image
+docs
+*.md
+!README.md
+
+# SQLite database (mounted via volume at runtime)
+prisma/*.db
+prisma/*.db-journal
+
+# Docker files themselves
+Dockerfile
+docker-compose.yml
+.dockerignore

@@ -1,0 +1,36 @@
+services:
+  school-app:
+    image: school-app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: school-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/prisma/dev.db
+      # Override in .env or with -e on the VPS:
+      # - JWT_SECRET=your_very_secret_key_here
+    env_file:
+      - .env
+    volumes:
+      # Named volume — Docker manages ownership (works on Windows & Linux).
+      # On a VPS you can swap this for a host bind-mount:
+      #   - /data/school:/app/prisma
+      - school-db:/app/prisma
+    healthcheck:
+      test: [ "CMD", "wget", "-qO-", "http://localhost:3000/api/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  school-db:

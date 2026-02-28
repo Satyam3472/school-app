@@ -1,12 +1,14 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
-import type { Role } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { Sidebar } from "@/components/sidebar";
-import { Header } from "@/components/header";
 
-export default async function DashboardLayout({
+/**
+ * Pure auth guard — checks the JWT cookie server-side.
+ * The actual UI (sidebar, header, breadcrumbs) is rendered by
+ * app/(dashboard)/dashboard/layout.tsx (client component).
+ */
+export default async function DashboardAuthLayout({
     children,
 }: {
     children: React.ReactNode;
@@ -25,21 +27,12 @@ export default async function DashboardLayout({
 
     const user = await prisma.user.findUnique({
         where: { id: payload.userId },
-        select: { name: true, role: true },
+        select: { id: true },
     });
 
     if (!user) {
         redirect("/login");
     }
 
-    return (
-        <div className="flex h-screen bg-gray-50">
-            <Sidebar role={user.role as Role} />
-            <div className="flex flex-1 flex-col overflow-hidden">
-                <Header userName={user.name} userRole={user.role} />
-                <main className="flex-1 overflow-y-auto p-6">{children}</main>
-            </div>
-        </div>
-    );
+    return <>{children}</>;
 }
-

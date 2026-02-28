@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -17,4 +18,102 @@ model User {
   role      String   @default("ADMIN")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Setting {
+  id          Int      @id @default(autoincrement())
+  schoolName  String
+  schoolId    String   @unique
+  slogan      String?
+  adminName   String
+  adminEmail  String   @unique
+  password    String
+  logoBase64       String
+  adminImageBase64 String
+
+  // Transport fees
+  transportFeeBelow3      Float?
+  transportFeeBetween3and5 Float?
+  transportFeeBetween5and10 Float?
+  transportFeeAbove10      Float?
+
+  classes     Class[]  // 1-to-many relationship
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Class {
+  id            Int     @id @default(autoincrement())
+  name          String
+  tuitionFee    Float
+  admissionFee  Float
+  settingId     Int
+  setting       Setting @relation(fields: [settingId], references: [id])
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  category    String
+  amount      Float
+  expenseDate DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// NOTE: SQLite stores enums as TEXT — Prisma handles this transparently.
+// FeeStatus values: PENDING | PAID | PARTIAL | OVERDUE (enforced at app layer)
+
+model Student {
+  id                 Int        @id @default(autoincrement())
+  studentName        String
+  dateOfBirth        DateTime
+  gender             String
+  email              String?    @unique
+  phone              String
+  address            String
+  fatherName         String?
+  motherName         String?
+  aadhaarNumber      String?
+  regNo              String?
+  studentPhotoBase64 String?
+  isActive           Boolean    @default(true)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  admission          Admission?
+  monthlyFees        MonthlyFee[]
+}
+
+model Admission {
+  id            Int      @id @default(autoincrement())
+  studentId     Int      @unique
+  admissionDate DateTime
+  classEnrolled String
+  section       String
+  academicYear  String
+  remarks       String?
+  transportType String   @default("None")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  student       Student  @relation(fields: [studentId], references: [id])
+}
+
+model MonthlyFee {
+  id           Int       @id @default(autoincrement())
+  studentId    Int
+  month        Int
+  year         Int
+  tuitionFee   Float
+  admissionFee Float
+  totalAmount  Float
+  paidAmount   Float     @default(0)
+  dueDate      DateTime
+  paidDate     DateTime?
+  status       String    @default("PENDING")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  student      Student   @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, month, year])
 }
