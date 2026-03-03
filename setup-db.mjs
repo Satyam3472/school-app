@@ -134,7 +134,8 @@ const monthlyFeeCols = db.prepare(`PRAGMA table_info("MonthlyFee")`).all();
 const colNames = monthlyFeeCols.map(c => c.name);
 
 if (!colNames.includes('receiptNo')) {
-  db.exec(`ALTER TABLE "MonthlyFee" ADD COLUMN "receiptNo" TEXT UNIQUE`);
+  db.exec(`ALTER TABLE "MonthlyFee" ADD COLUMN "receiptNo" TEXT`);
+  db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS "MonthlyFee_receiptNo_key" ON "MonthlyFee"("receiptNo")`);
   console.log('[migration] Added receiptNo column to MonthlyFee');
 }
 
