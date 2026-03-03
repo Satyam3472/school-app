@@ -103,6 +103,8 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS "MonthlyFee" (
     "id"           INTEGER PRIMARY KEY AUTOINCREMENT,
+    "receiptNo"    TEXT UNIQUE,
+    "transportFee" REAL NOT NULL DEFAULT 0,
     "studentId"    INTEGER NOT NULL,
     "month"        INTEGER NOT NULL,
     "year"         INTEGER NOT NULL,
@@ -118,6 +120,9 @@ db.exec(`
     CONSTRAINT "MonthlyFee_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student"("id") ON DELETE RESTRICT ON UPDATE CASCADE
   );
   CREATE UNIQUE INDEX IF NOT EXISTS "MonthlyFee_studentId_month_year_key" ON "MonthlyFee"("studentId", "month", "year");
+  CREATE INDEX IF NOT EXISTS "MonthlyFee_status_idx" ON "MonthlyFee"("status");
+  CREATE INDEX IF NOT EXISTS "MonthlyFee_studentId_idx" ON "MonthlyFee"("studentId");
+  CREATE INDEX IF NOT EXISTS "Expense_expenseDate_idx" ON "Expense"("expenseDate");
 `);
 
 console.log('[seed] All tables created.');

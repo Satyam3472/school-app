@@ -1,21 +1,9 @@
 import prisma from "@/lib/prisma"
 import { NextResponse } from "next/server"
-import { cookies } from "next/headers"
-import { verifyToken } from "@/lib/auth"
 
+// Auth is handled by middleware.ts — no need for inline token checks here
 export async function GET() {
     try {
-        const cookieStore = await cookies()
-        const token = cookieStore.get("token")?.value
-
-        if (!token) {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
-        }
-        const payload = verifyToken(token)
-        if (!payload) {
-            return NextResponse.json({ success: false, error: "Invalid token" }, { status: 401 })
-        }
-
         const settings = await prisma.setting.findFirst({
             include: {
                 classes: { orderBy: { name: "asc" } },

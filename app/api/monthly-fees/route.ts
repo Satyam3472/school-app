@@ -163,11 +163,19 @@ export async function PUT(request: Request) {
             status ?? (newPaidAmount >= total ? "PAID" : newPaidAmount > 0 ? "PARTIAL" : "PENDING")
         if (resolvedStatus === "PARTIALLY_PAID") resolvedStatus = "PARTIAL"
 
+        // Generate receipt number on first payment completion
+        let receiptNo: string | undefined = undefined
+        if ((resolvedStatus === "PAID" || resolvedStatus === "PARTIAL") && !existing.receiptNo) {
+            const fyYear = existing.month >= 4 ? existing.year : existing.year - 1
+            receiptNo = `${fyYear}-${String(existing.id).padStart(6, "0")}`
+        }
+
         const updated = await prisma.monthlyFee.update({
             where: { id: parseInt(id) },
             data: {
                 paidAmount: newPaidAmount,
                 status: resolvedStatus,
+                ...(receiptNo ? { receiptNo } : {}),
                 paidDate:
                     resolvedStatus === "PAID"
                         ? paidDate

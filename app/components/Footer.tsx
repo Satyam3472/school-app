@@ -9,7 +9,7 @@ const Footer = () => {
   return (
     <footer className="bg-gray-50 text-gray-700 py-10 px-6 sm:py-16 border-t border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           {/* School Branding */}
           <div>
             <h3 className="text-2xl font-bold mb-4">
@@ -71,27 +71,6 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
-          </div>
-
-          {/* Newsletter */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Newsletter</h4>
-            <p className="text-sm text-gray-600 mb-4">
-              Stay informed with school news and announcements.
-            </p>
-            <div className="flex mb-4">
-              <input
-                type="email"
-                placeholder="Your Email"
-                className="bg-white border border-gray-300 text-sm px-4 py-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-teal-500 w-full"
-              />
-              <button className="bg-teal-600 hover:bg-teal-700 text-white px-3 rounded-r-md transition-all duration-300">
-                <IoIosSend className="w-6 h-6" />
-              </button>
-            </div>
-            <button className="w-full bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white font-medium py-2 rounded-md shadow hover:shadow-lg transition-transform transform hover:scale-[1.02]">
-              Request Prospectus
-            </button>
           </div>
         </div>
 

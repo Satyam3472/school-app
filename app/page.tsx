@@ -1,3 +1,5 @@
+'use client'
+
 import About from "./components/About";
 import Footer from "./components/Footer";
 import Gallery from "./components/Gallery";
@@ -8,10 +10,10 @@ export default function Home() {
   return (
     <div>
       <NavBar />
-      <Hero/>
+      <Hero />
       <Gallery />
       <About />
-      <Footer/>
+      <Footer />
     </div>
   );
 }

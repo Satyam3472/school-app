@@ -1,7 +1,13 @@
 import jwt from 'jsonwebtoken';
 import bcryptjs from 'bcryptjs';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_jwt_key_change_in_production';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    throw new Error(
+        "FATAL: JWT_SECRET environment variable is not set. " +
+        "Set it in .env or as a Docker environment variable."
+    );
+}
 
 // Role is stored as String in SQLite (SQLite doesn't support native enums).
 // Will be a proper enum in PostgreSQL when you migrate.

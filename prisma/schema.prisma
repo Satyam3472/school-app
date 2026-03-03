@@ -60,6 +60,8 @@ model Expense {
   expenseDate DateTime
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([expenseDate])
 }
 
 // NOTE: SQLite stores enums as TEXT — Prisma handles this transparently.
@@ -101,6 +103,8 @@ model Admission {
 
 model MonthlyFee {
   id           Int       @id @default(autoincrement())
+  receiptNo    String?   @unique
+  transportFee Float     @default(0)
   studentId    Int
   month        Int
   year         Int
@@ -116,4 +120,6 @@ model MonthlyFee {
   student      Student   @relation(fields: [studentId], references: [id])
 
   @@unique([studentId, month, year])
+  @@index([status])
+  @@index([studentId])
 }

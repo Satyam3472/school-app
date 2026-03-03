@@ -163,3 +163,40 @@
   background-image: radial-gradient(#1325ec 1px, transparent 1px);
   background-size: 24px 24px;
 }
+
+/* Print styles for invoice */
+@media print {
+  /* Hide everything except invoice content */
+  body * {
+    visibility: hidden;
+  }
+
+  #invoice-content,
+  #invoice-content * {
+    visibility: visible;
+  }
+
+  #invoice-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 1rem !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  @page {
+    margin: 0.5in;
+    size: A4;
+  }
+}

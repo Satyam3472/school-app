@@ -12,7 +12,9 @@ export async function GET() {
             return NextResponse.json({ success: false, error: 'No settings found' }, { status: 404 });
         }
 
-        return NextResponse.json({ success: true, data: setting });
+        // Strip plaintext password from response
+        const { password: _pwd, ...safeData } = setting;
+        return NextResponse.json({ success: true, data: safeData });
     } catch (error) {
         console.error('[settings GET]', error);
         return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
@@ -111,7 +113,9 @@ export async function POST(req: Request) {
             });
         }
 
-        return NextResponse.json({ success: true, data: result });
+        // Strip plaintext password from response
+        const { password: _pwd, ...safeResult } = result;
+        return NextResponse.json({ success: true, data: safeResult });
     } catch (error) {
         console.error('Error saving settings:', error);
         return NextResponse.json({ success: false, error: 'Something went wrong' }, { status: 500 });

@@ -6,15 +6,13 @@ import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import {
     Home,
-    Users,
-    BookOpen,
     Settings,
-    DollarSign,
     GraduationCap,
     LogOut,
     TrendingDown,
     ClipboardList,
     Wallet,
+    Database,
 } from "lucide-react"
 import {
     Sidebar,
@@ -52,18 +50,6 @@ const NAV_ITEMS = [
         roles: ["SUPER_ADMIN", "ADMIN"] as Role[],
     },
     {
-        label: "Teachers",
-        href: "/teachers",
-        icon: Users,
-        roles: ["SUPER_ADMIN", "ADMIN"] as Role[],
-    },
-    {
-        label: "Subjects",
-        href: "/subjects",
-        icon: BookOpen,
-        roles: ["SUPER_ADMIN", "ADMIN"] as Role[],
-    },
-    {
         label: "Fee Management",
         href: "/dashboard/fee-management",
         icon: Wallet,
@@ -79,6 +65,12 @@ const NAV_ITEMS = [
         label: "Settings",
         href: "/dashboard/settings",
         icon: Settings,
+        roles: ["SUPER_ADMIN"] as Role[],
+    },
+    {
+        label: "DB Panel",
+        href: "/dashboard/db-panel",
+        icon: Database,
         roles: ["SUPER_ADMIN"] as Role[],
     },
 ]

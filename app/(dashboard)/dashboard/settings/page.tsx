@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Plus, Trash2 } from 'lucide-react';
 import { showErrorAlert, showSuccessAlert } from '@/utils/customFunction';
 import { useRouter } from 'next/navigation';
-import { useSchoolData } from '../layout';
+import { useSchoolData, useDashboardNav } from '../layout';
 
 const TRANSPORT_FEE_DISTANCES = [
     { key: 'below3', label: 'Below 3 KM' },
@@ -41,6 +41,15 @@ export default function SettingsPage() {
     const [isExisting, setIsExisting] = useState(false);
     const router = useRouter();
     const { refetchSchoolData } = useSchoolData();
+    const { setBreadcrumb, setPageTitle } = useDashboardNav();
+
+    useEffect(() => {
+        setBreadcrumb([
+            { label: 'Dashboard', href: '/dashboard' },
+            { label: 'Settings' },
+        ]);
+        setPageTitle('Settings');
+    }, [setBreadcrumb, setPageTitle]);
 
     useEffect(() => {
         const loadSettings = async () => {

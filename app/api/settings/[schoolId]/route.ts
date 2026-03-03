@@ -17,7 +17,9 @@ export async function GET(
             return NextResponse.json({ error: 'School not found' }, { status: 404 });
         }
 
-        return NextResponse.json(setting);
+        // Strip plaintext password from response
+        const { password: _pwd, ...safeData } = setting;
+        return NextResponse.json(safeData);
     } catch (error) {
         console.error('API Error:', error);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
@@ -91,10 +93,12 @@ export async function PUT(
             include: { classes: true },
         });
 
+        // Strip plaintext password from response
+        const { password: _pwd, ...safeData } = updatedSetting;
         return NextResponse.json({
             success: true,
             message: 'Settings updated successfully',
-            data: updatedSetting,
+            data: safeData,
         });
     } catch (error) {
         console.error('Update API Error:', error);
