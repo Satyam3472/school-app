@@ -127,6 +127,22 @@ db.exec(`
 
 console.log('[seed] All tables created.');
 
+// ── Safe migrations for existing databases ───────────────────────────────────
+// If the table already existed before new columns were added,
+// CREATE TABLE IF NOT EXISTS won't modify it. This block adds missing columns.
+const monthlyFeeCols = db.prepare(`PRAGMA table_info("MonthlyFee")`).all();
+const colNames = monthlyFeeCols.map(c => c.name);
+
+if (!colNames.includes('receiptNo')) {
+  db.exec(`ALTER TABLE "MonthlyFee" ADD COLUMN "receiptNo" TEXT UNIQUE`);
+  console.log('[migration] Added receiptNo column to MonthlyFee');
+}
+
+if (!colNames.includes('transportFee')) {
+  db.exec(`ALTER TABLE "MonthlyFee" ADD COLUMN "transportFee" REAL NOT NULL DEFAULT 0`);
+  console.log('[migration] Added transportFee column to MonthlyFee');
+}
+
 // ── Seed super admin user ────────────────────────────────────────────────────
 const adminEmail = 'kumarsatyam8298380149@gmail.com';
 const existingUser = db.prepare('SELECT id FROM "User" WHERE email = ?').get(adminEmail);
