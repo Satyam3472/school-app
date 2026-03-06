@@ -92,6 +92,8 @@ export async function GET(
                     id: fee.student.id,
                     studentName: fee.student.studentName,
                     fatherName: fee.student.fatherName,
+                    motherName: fee.student.motherName,
+                    regNo: fee.student.regNo,
                     phone: fee.student.phone,
                 },
                 admission: fee.student.admission

@@ -8,9 +8,9 @@ import {
     Users,
     DollarSign,
     PieChart,
-    ArrowUpRight,
-    ArrowDownRight,
-    Target,
+    GraduationCap,
+    UserPlus,
+    Loader2,
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -26,22 +26,11 @@ import {
     PieChart as RechartsPieChart,
     Pie,
     Cell,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    ResponsiveContainer,
 } from "recharts"
-import AdmissionForm from "./admissions/page"
-
-const feeCollectionData = [
-    { status: "Paid", value: 75, color: "#10b981" },
-    { status: "Pending", value: 15, color: "#f59e0b" },
-    { status: "Overdue", value: 10, color: "#ef4444" },
-]
-
-const attendanceData = [
-    { day: "Mon", present: 1180, absent: 65 },
-    { day: "Tue", present: 1195, absent: 50 },
-    { day: "Wed", present: 1205, absent: 40 },
-    { day: "Thu", present: 1210, absent: 35 },
-    { day: "Fri", present: 1220, absent: 25 },
-]
 
 const EXPENSE_COLORS: Record<string, string> = {
     Utilities: "#3b82f6",
@@ -52,10 +41,11 @@ const EXPENSE_COLORS: Record<string, string> = {
 }
 const COLOR_LIST = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#ec4899", "#14b8a6"]
 
-const chartConfig = {
-    present: { label: "Present", color: "#10b981" },
-    absent: { label: "Absent", color: "#ef4444" },
-}
+const CLASS_COLORS = [
+    "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444",
+    "#ec4899", "#14b8a6", "#f97316", "#6366f1", "#84cc16",
+    "#06b6d4", "#e11d48",
+]
 
 type ExpenseEntry = {
     id: number
@@ -70,8 +60,51 @@ type ChartSlice = {
     color: string
 }
 
+type FeeBreakdownItem = {
+    status: string
+    value: number
+    color: string
+}
+
+type ClassDistItem = {
+    className: string
+    count: number
+}
+
+type RecentAdmission = {
+    id: number
+    studentName: string
+    classEnrolled: string
+    section: string
+    admissionDate: string
+    photoBase64: string | null
+}
+
+type DashboardStats = {
+    totalStudents: number
+    monthlyIncome: number
+    totalExpectedFees: number
+    totalExpenses: number
+    totalAllExpenses: number
+    profit: number
+    feeBreakdown: FeeBreakdownItem[]
+    classDistribution: ClassDistItem[]
+    recentAdmissions: RecentAdmission[]
+    currentMonth: number
+    currentYear: number
+}
+
+const MONTH_NAMES = [
+    "", "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+]
+
 export default function Dashboard() {
     const { setBreadcrumb, setPageTitle } = useDashboardNav()
+    const [stats, setStats] = useState<DashboardStats | null>(null)
+    const [loading, setLoading] = useState(true)
+
+    // Expense breakdown (separate fetch for the chart detail)
     const [expenseBreakdown, setExpenseBreakdown] = useState<ChartSlice[]>([])
     const [totalExpenses, setTotalExpenses] = useState(0)
 
@@ -83,6 +116,24 @@ export default function Dashboard() {
         setPageTitle("Overview")
     }, [setBreadcrumb, setPageTitle])
 
+    // Fetch dashboard stats
+    useEffect(() => {
+        async function loadStats() {
+            try {
+                const res = await fetch("/api/dashboard/stats")
+                const result = await res.json()
+                if (result.success) {
+                    setStats(result.data)
+                }
+            } catch {
+                // silently fail
+            } finally {
+                setLoading(false)
+            }
+        }
+        loadStats()
+    }, [])
+
     // Fetch real expense data for charts
     useEffect(() => {
         async function loadExpenses() {
@@ -91,7 +142,6 @@ export default function Dashboard() {
                 const result = await res.json()
                 if (result.success) {
                     const expenses: ExpenseEntry[] = result.data
-                    // Group by category
                     const grouped: Record<string, number> = {}
                     let total = 0
                     for (const exp of expenses) {
@@ -107,12 +157,14 @@ export default function Dashboard() {
                     setExpenseBreakdown(breakdown)
                     setTotalExpenses(total)
                 }
-            } catch (e) {
+            } catch {
                 // silently fail — chart stays empty
             }
         }
         loadExpenses()
     }, [])
+
+    const monthLabel = stats ? MONTH_NAMES[stats.currentMonth] : ""
 
     return (
         <div className="flex flex-1 flex-col gap-6 p-6">
@@ -123,11 +175,13 @@ export default function Dashboard() {
                         <div className="flex items-center justify-between">
                             <div className="space-y-1">
                                 <p className="text-sm font-medium text-muted-foreground">Total Students</p>
-                                <p className="text-2xl font-bold">1,245</p>
-                                <div className="flex items-center text-xs text-green-600">
-                                    <ArrowUpRight className="w-3 h-3 mr-1" />
-                                    +12% from last month
-                                </div>
+                                <p className="text-2xl font-bold">
+                                    {loading ? (
+                                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                                    ) : (
+                                        stats?.totalStudents?.toLocaleString() ?? "0"
+                                    )}
+                                </p>
                             </div>
                             <div className="bg-blue-100 dark:bg-blue-900/20 p-3 rounded-lg">
                                 <Users className="w-6 h-6 text-blue-600" />
@@ -140,15 +194,19 @@ export default function Dashboard() {
                     <CardContent className="px-4 py-2">
                         <div className="flex items-center justify-between">
                             <div className="space-y-1">
-                                <p className="text-sm font-medium text-muted-foreground">Today&apos;s Attendance</p>
-                                <p className="text-2xl font-bold">1,020</p>
-                                <div className="flex items-center text-xs text-green-600">
-                                    <ArrowUpRight className="w-3 h-3 mr-1" />
-                                    98.2% attendance rate
-                                </div>
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    Income ({monthLabel})
+                                </p>
+                                <p className="text-2xl font-bold text-green-600">
+                                    {loading ? (
+                                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                                    ) : (
+                                        `Rs.${(stats?.monthlyIncome ?? 0).toLocaleString()}`
+                                    )}
+                                </p>
                             </div>
                             <div className="bg-green-100 dark:bg-green-900/20 p-3 rounded-lg">
-                                <CalendarCheck className="w-6 h-6 text-green-600" />
+                                <TrendingUp className="w-6 h-6 text-green-600" />
                             </div>
                         </div>
                     </CardContent>
@@ -158,32 +216,16 @@ export default function Dashboard() {
                     <CardContent className="px-4 py-2">
                         <div className="flex items-center justify-between">
                             <div className="space-y-1">
-                                <p className="text-sm font-medium text-muted-foreground">Monthly Income</p>
-                                <p className="text-2xl font-bold text-green-600">Rs.65,000</p>
-                                <div className="flex items-center text-xs text-green-600">
-                                    <ArrowUpRight className="w-3 h-3 mr-1" />
-                                    +15.3% from last month
-                                </div>
-                            </div>
-                            <div className="bg-emerald-100 dark:bg-emerald-900/20 p-3 rounded-lg">
-                                <TrendingUp className="w-6 h-6 text-emerald-600" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="shadow-sm py-2">
-                    <CardContent className="px-4 py-2">
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-muted-foreground">Total Expenses</p>
-                                <p className="text-2xl font-bold text-red-600">
-                                    Rs.{totalExpenses > 0 ? totalExpenses.toLocaleString() : "—"}
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    Expenses ({monthLabel})
                                 </p>
-                                <div className="flex items-center text-xs text-muted-foreground">
-                                    <DollarSign className="w-3 h-3 mr-1" />
-                                    {expenseBreakdown.length > 0 ? `${expenseBreakdown.length} categories` : "No data yet"}
-                                </div>
+                                <p className="text-2xl font-bold text-red-600">
+                                    {loading ? (
+                                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                                    ) : (
+                                        `Rs.${(stats?.totalExpenses ?? 0).toLocaleString()}`
+                                    )}
+                                </p>
                             </div>
                             <div className="bg-rose-100 dark:bg-rose-900/20 p-3 rounded-lg">
                                 <TrendingDown className="w-6 h-6 text-rose-600" />
@@ -191,83 +233,142 @@ export default function Dashboard() {
                         </div>
                     </CardContent>
                 </Card>
-            </div>
 
-            {/* Main Charts Grid */}
-            <div className="grid gap-6 lg:grid-cols-3">
-                {/* Admission Form embed */}
-                <Card className="lg:col-span-2 shadow-sm py-0">
-                    <CardContent className="px-0">
-                        <AdmissionForm />
+                <Card className="shadow-sm py-2">
+                    <CardContent className="px-4 py-2">
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-1">
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    Profit ({monthLabel})
+                                </p>
+                                <p className={`text-2xl font-bold ${(stats?.profit ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                                    {loading ? (
+                                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                                    ) : (
+                                        `Rs.${(stats?.profit ?? 0).toLocaleString()}`
+                                    )}
+                                </p>
+                            </div>
+                            <div className="bg-emerald-100 dark:bg-emerald-900/20 p-3 rounded-lg">
+                                <CalendarCheck className="w-6 h-6 text-emerald-600" />
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
+            </div>
 
-                {/* Fee Collection Status */}
+            {/* Charts Row */}
+            <div className="grid gap-6 lg:grid-cols-2">
+                {/* Fee Collection — real data */}
                 <Card className="shadow-sm">
                     <CardHeader className="pb-3">
                         <CardTitle className="text-lg flex items-center gap-2">
                             <DollarSign className="w-5 h-5 text-green-600" />
                             Fee Collection
                         </CardTitle>
-                        <CardDescription>Current payment status</CardDescription>
+                        <CardDescription>
+                            {monthLabel} {stats?.currentYear} payment status
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[200px] flex items-center justify-center">
-                            <RechartsPieChart width={200} height={200}>
-                                <Pie
-                                    data={feeCollectionData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={40}
-                                    outerRadius={80}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {feeCollectionData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <ChartTooltip />
-                            </RechartsPieChart>
-                        </div>
-                        <div className="mt-4 space-y-2">
-                            {feeCollectionData.map((item) => (
-                                <div key={item.status} className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                                        <span className="text-muted-foreground">{item.status}</span>
-                                    </div>
-                                    <span className="font-medium">{item.value}%</span>
+                        {loading ? (
+                            <div className="flex items-center justify-center h-[200px]">
+                                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                            </div>
+                        ) : !stats?.feeBreakdown?.length ? (
+                            <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground gap-2">
+                                <DollarSign className="w-10 h-10 opacity-20" />
+                                <p className="text-sm">No fee records for this month</p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="h-[200px] flex items-center justify-center">
+                                    <RechartsPieChart width={200} height={200}>
+                                        <Pie
+                                            data={stats.feeBreakdown}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={40}
+                                            outerRadius={80}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                        >
+                                            {stats.feeBreakdown.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <ChartTooltip />
+                                    </RechartsPieChart>
                                 </div>
-                            ))}
-                        </div>
+                                <div className="mt-4 space-y-2">
+                                    {stats.feeBreakdown.map((item) => (
+                                        <div key={item.status} className="flex items-center justify-between text-sm">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                                                <span className="text-muted-foreground">{item.status}</span>
+                                            </div>
+                                            <span className="font-medium">{item.value}%</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Class-wise Student Distribution — real data */}
+                <Card className="shadow-sm">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                            <GraduationCap className="w-5 h-5 text-blue-600" />
+                            Students by Class
+                        </CardTitle>
+                        <CardDescription>Active student distribution across classes</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {loading ? (
+                            <div className="flex items-center justify-center h-[200px]">
+                                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                            </div>
+                        ) : !stats?.classDistribution?.length ? (
+                            <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground gap-2">
+                                <GraduationCap className="w-10 h-10 opacity-20" />
+                                <p className="text-sm">No student data yet</p>
+                            </div>
+                        ) : (
+                            <div className="h-[250px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={stats.classDistribution} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                                        <XAxis
+                                            dataKey="className"
+                                            tick={{ fontSize: 12 }}
+                                            tickLine={false}
+                                        />
+                                        <YAxis
+                                            allowDecimals={false}
+                                            tick={{ fontSize: 12 }}
+                                            tickLine={false}
+                                        />
+                                        <ChartTooltip />
+                                        <Bar dataKey="count" name="Students" radius={[4, 4, 0, 0]}>
+                                            {stats.classDistribution.map((_, index) => (
+                                                <Cell
+                                                    key={`bar-${index}`}
+                                                    fill={CLASS_COLORS[index % CLASS_COLORS.length]}
+                                                />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Secondary Charts Row */}
+            {/* Secondary Row: Expense Breakdown + Recent Admissions */}
             <div className="grid gap-6 lg:grid-cols-2">
-                {/* Weekly Attendance */}
-                <Card className="shadow-sm">
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                            <CalendarCheck className="w-5 h-5 text-blue-600" />
-                            Weekly Attendance
-                        </CardTitle>
-                        <CardDescription>Present vs absent students</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <ChartContainer config={chartConfig}>
-                            <BarChart data={attendanceData}>
-                                <Bar dataKey="present" fill="#10b981" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="absent" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                                <ChartTooltip content={<ChartTooltipContent />} />
-                                <ChartLegend content={<ChartLegendContent />} />
-                            </BarChart>
-                        </ChartContainer>
-                    </CardContent>
-                </Card>
-
                 {/* Expense Breakdown — real data */}
                 <Card className="shadow-sm">
                     <CardHeader className="pb-3">
@@ -327,64 +428,67 @@ export default function Dashboard() {
                         )}
                     </CardContent>
                 </Card>
-            </div>
 
-            {/* Quick Stats Row */}
-            <div className="grid gap-4 md:grid-cols-3">
-                <Card className="shadow-sm py-0">
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                            <Target className="w-4 h-4 text-blue-600" />
-                            <span className="text-sm font-medium">Student Growth</span>
-                        </div>
-                        <div className="space-y-1">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">This Month</span>
-                                <span className="font-medium text-green-600">+15</span>
+                {/* Recent Admissions */}
+                <Card className="shadow-sm">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                            <UserPlus className="w-5 h-5 text-emerald-600" />
+                            Recent Admissions
+                        </CardTitle>
+                        <CardDescription>Latest enrolled students</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {loading ? (
+                            <div className="flex items-center justify-center h-[200px]">
+                                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                             </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">This Year</span>
-                                <span className="font-medium text-green-600">+89</span>
+                        ) : !stats?.recentAdmissions?.length ? (
+                            <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground gap-2">
+                                <UserPlus className="w-10 h-10 opacity-20" />
+                                <p className="text-sm">No admissions yet</p>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="shadow-sm py-0">
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                            <TrendingUp className="w-4 h-4 text-green-600" />
-                            <span className="text-sm font-medium">Revenue Growth</span>
-                        </div>
-                        <div className="space-y-1">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">This Month</span>
-                                <span className="font-medium text-green-600">+12.5%</span>
+                        ) : (
+                            <div className="space-y-3">
+                                {stats.recentAdmissions.map((admission) => (
+                                    <div
+                                        key={admission.id}
+                                        className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/40 hover:bg-muted/70 transition-colors"
+                                    >
+                                        <div className="flex-shrink-0">
+                                            {admission.photoBase64 ? (
+                                                <img
+                                                    src={admission.photoBase64}
+                                                    alt={admission.studentName}
+                                                    className="w-9 h-9 rounded-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                                    <span className="text-sm font-semibold text-blue-600">
+                                                        {admission.studentName.charAt(0).toUpperCase()}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium truncate">
+                                                {admission.studentName}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Class {admission.classEnrolled} — Sec {admission.section}
+                                            </p>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground whitespace-nowrap">
+                                            {new Date(admission.admissionDate).toLocaleDateString("en-IN", {
+                                                day: "2-digit",
+                                                month: "short",
+                                                year: "numeric",
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">This Year</span>
-                                <span className="font-medium text-green-600">+28.3%</span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="shadow-sm py-0">
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                            <CalendarCheck className="w-4 h-4 text-blue-600" />
-                            <span className="text-sm font-medium">Attendance Rate</span>
-                        </div>
-                        <div className="space-y-1">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">This Week</span>
-                                <span className="font-medium">98.2%</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">This Month</span>
-                                <span className="font-medium">97.8%</span>
-                            </div>
-                        </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

@@ -24,6 +24,8 @@ interface InvoiceData {
         id: number
         studentName: string
         fatherName: string | null
+        motherName: string | null
+        regNo: string | null
         phone: string
     }
     admission: {
@@ -156,8 +158,10 @@ export default function InvoicePage() {
                 email={data.school?.adminEmail || ""}
                 receiptDate={receiptDate}
                 receiptNo={data.fee.receiptNo || `#${data.fee.id}`}
-                admissionNo={data.admission?.id || data.student.id}
                 studentName={data.student.studentName}
+                fatherName={data.student.fatherName || "—"}
+                motherName={data.student.motherName || "—"}
+                regNo={data.student.regNo || "—"}
                 studentClass={
                     data.admission
                         ? `${data.admission.classEnrolled} - ${data.admission.section}`
